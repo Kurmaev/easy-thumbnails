@@ -7,6 +7,7 @@ import os
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
 from django.utils.http import urlquote
+from django.db.models import Q
 
 from easy_thumbnails import engine, exceptions, models, utils, signals
 from easy_thumbnails.alias import aliases
@@ -381,6 +382,21 @@ class Thumbnailer(File):
             names = (opaque_name,)
         else:
             names = (opaque_name, transparent_name)
+
+        ####
+        # If this thumbnail not exists, maybe errors.
+        # TODO: check it
+        try:
+            obj = models.Thumbnail.objects.filter(Q(name=names[0]) | Q(name=names[1]))[0]
+            name = obj.name
+        except:
+            name = ""
+
+        return ThumbnailFile(name=name,
+                     storage=self.thumbnail_storage,
+                     thumbnail_options=thumbnail_options)
+
+        ####        
         for filename in names:
             if self.thumbnail_exists(filename):
                 return ThumbnailFile(name=filename,
